@@ -3,17 +3,45 @@ import { View, Text, ScrollView } from 'react-native';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import { spacing } from '../../theme';
+import Config from '../../config'
+
 
 export default function SignupCustomer({ navigation }) {
   const [form, setForm] = useState({ username:'', phone:'', email:'', password:'', confirm:'' });
 
-  const onSubmit = () => {
-    if (!form.username || !form.email || !form.password || form.password !== form.confirm) {
-      alert('Please complete the form. Passwords must match.'); return;
+ const onSubmit = async () => {
+  if (!form.username || !form.email || !form.password || form.password !== form.confirm) {
+    alert('Please complete the form. Passwords must match.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${Config.BASE_URL}auth/request-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: form.email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error:', errorData);
+      alert(errorData.message || 'Failed to request OTP. Please try again.');
+      return;
     }
-    // TODO: POST /api/auth/register
-    navigation.navigate('Verify', { email: form.email });
-  };
+
+    const data = await response.json();
+    console.log('OTP Request Success:', data);
+    alert('Verification code sent to your email.');
+    navigation.navigate('Verify', { email: form.email , username:form.username, password: form.password, phone:form.password});
+
+  } catch (error) {
+    console.error('Network error:', error);
+    alert('Network error. Please check your connection and try again.');
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={{padding: spacing(2)}}>
