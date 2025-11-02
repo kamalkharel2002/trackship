@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from '../screens/app/Home';
 import PlaceShipment from '../screens/app/PlaceShipment';
 import Track from '../screens/app/Track';
+import CheckDriver from '../screens/home/CheckDriver';
 import Profile from '../screens/app/Profile';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../utils/theme';
@@ -26,6 +27,8 @@ export default function Tabs() {
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Place Shipment" component={PlaceShipment} />
       <Tab.Screen name="Track" component={Track} />
+      <Tab.Screen name="Live Track" component={LiveTrack} />
+      <Tab.Screen name="Check Driver" component={CheckDriver} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );

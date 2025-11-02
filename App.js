@@ -1,3 +1,10 @@
-import 'react-native-reanimated'; // MUST be first
+import 'react-native-gesture-handler';
+import { registerRootComponent } from 'expo';
 import AppRoot from './frontend/App';
-export default AppRoot;
+
+function App() {
+  return <AppRoot />;
+}
+
+registerRootComponent(App);
+export default App;
