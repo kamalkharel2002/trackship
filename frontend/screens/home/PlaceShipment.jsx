@@ -147,7 +147,7 @@ function ItemForm({ idx, value, onChange, onRemove }) {
   );
 }
 
-export default function PlaceShipment() {
+export default function PlaceShipment({ navigation }) {
   const [form, setForm] = useState({
     receiverName: '',
     phone: '',
@@ -317,9 +317,13 @@ export default function PlaceShipment() {
       <ModalDialog
         visible={done.visible}
         title="Shipment Created!"
-        message={`Shipment Number: ${done.id}\n\nYour shipment has been created successfully.`}
-        onConfirm={() => setDone({ visible: false, id: null })}
+        message="Your shipment has been created successfully."
+        onConfirm={() => {
+          setDone({ visible: false, id: null });
+          navigation.replace('Home'); // or navigate('Home')
+        }}
       />
+
     </ScrollView>
   );
 }

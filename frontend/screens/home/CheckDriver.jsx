@@ -10,7 +10,6 @@ const LOCATIONS = [
 const ALL_DRIVERS = [
   { id:1, name:'Sonam Dorji', vehicle:'Coster Bus',    from:'Shaba, Paro', to:'Thimphu',     status:'Available' },
   { id:2, name:'Jigme Choda', vehicle:'Alto-800',      from:'Bondey, Paro', to:'Taba, Thimphu', status:'Available' },
-  { id:3, name:'Sangay Wangdi', vehicle:'Hilux',       from:'Paro Town', to:'Thimphu',     status:'Busy' },
 ];
 
 function DriverCard({ d }) {
@@ -39,9 +38,6 @@ export default function CheckDriver(){
 
   return (
     <ScrollView style={{flex:1, backgroundColor:colors.white}} contentContainerStyle={{padding:spacing(2)}}>
-      {/* Header brand line */}
-      <Text style={styles.brand}>TrackShip</Text>
-
       <Text style={styles.title}>Driver Availability</Text>
       <View style={{height:1, backgroundColor:colors.border, marginBottom:spacing(2)}} />
 

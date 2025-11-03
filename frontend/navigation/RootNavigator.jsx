@@ -15,12 +15,17 @@ import Notifications from '../screens/home/Notifications';
 import LiveTrack from '../screens/home/LiveTrack';
 import CheckDriver from '../screens/home/CheckDriver';
 import Profile from '../screens/home/Profile';
+import TopBar from '../components/TopBar';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown:false }}>
+    <Stack.Navigator
+      screenOptions={{
+        header: () => <TopBar />,  // ✅ Global top bar
+      }}
+    >
       {/* Entry */}
       <Stack.Screen name="Splash" component={Splash} />
       <Stack.Screen name="RoleChoice" component={RoleChoice} />

@@ -1,4 +1,4 @@
--- Seed hubs data (Bhutan context with valid coordinates)   
+-- Seed hubs data (Bhutan context with valid coordinates)  
 INSERT INTO hubs (hub_id, hub_name, address, latitude, longitude) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Thimphu Central Hub', 'Norzin Lam, Thimphu City', 27.4728, 89.6390),
 ('22222222-2222-2222-2222-222222222222', 'Paro Airport Hub', 'Paro International Airport Road, Paro', 27.4030, 89.4240),

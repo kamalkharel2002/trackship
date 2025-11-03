@@ -1,55 +1,153 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 
 export default function ShipmentCard({ data, onDetails }) {
+  const id = data.id || data.shipment_number;
+  const { bg, fg } = statusStyle(data.status);
+
   return (
     <View style={styles.card}>
+      {/* Header: icon + shipment number (2 lines) + status badge */}
       <View style={styles.rowSpace}>
-        <Text style={styles.small}>Shipment Number</Text>
-        <View style={[styles.badge, statusBg(data.status)]}><Text style={styles.badgeTxt}>{data.status}</Text></View>
-      </View>
-      <Text style={styles.id}>{data.id}</Text>
+        <View style={styles.rowLeft}>
+          <View style={styles.iconWrap}>
+            <Ionicons name="cube-outline" size={18} color="#007AFF" />
+          </View>
+          <View>
+            <Text style={styles.small}>Shipment Number</Text>
+            {/* <Text style={styles.id}>{id}</Text> */}
+          </View>
+        </View>
 
-      <View style={styles.sep} />
-
-      <View style={styles.rowSpace}>
-        <Text>{data.from}</Text>
-        <Text style={{fontSize:18}}>➜</Text>
-        <Text numberOfLines={1} style={{maxWidth:'45%'}}>{data.to}</Text>
-      </View>
-
-      <View style={styles.rowSpace}>
-        <Text style={styles.small}>Receiver’s Name{'\n'}<Text style={styles.bold}>{data.receiver}</Text></Text>
-        <Text style={styles.small}>Receiver’s Contact No.{'\n'}<Text style={styles.bold}>{data.phone}</Text></Text>
+        <View style={[styles.badge, { backgroundColor: bg }]}>
+          <Text style={[styles.badgeTxt, { color: fg }]}>{data.status}</Text>
+        </View>
       </View>
 
       <View style={styles.sep} />
 
-      <View style={styles.rowSpace}>
-        <Text style={styles.bold}>Delivery Fee</Text>
-        <Text className="font-bold">Nu. {Number(data.fee).toFixed(2)}</Text>
+      {/* Route */}
+      <View style={[styles.rowSpace, { marginBottom: 6 }]}>
+        <Text style={styles.text}>{data.from}</Text>
+        <Ionicons name="chevron-forward" size={18} color="#444" />
+        <Text style={[styles.text, { maxWidth: '45%' }]} numberOfLines={1}>
+          {data.to}
+        </Text>
       </View>
 
+      {/* Receiver info */}
+      <View style={styles.rowSpace}>
+        <View>
+          <Text style={styles.small}>Receiver’s Name</Text>
+          <Text style={styles.text}>{data.receiver}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.small}>Receiver’s Contact No.</Text>
+          <Text style={styles.text}>{data.phone}</Text>
+        </View>
+      </View>
+
+      <View style={styles.sep} />
+
+      {/* Delivery fee */}
+      <View style={styles.rowSpace}>
+        <Text style={styles.small}>Delivery Fee</Text>
+        <Text style={styles.text}>Nu. {Number(data.fee).toFixed(2)}</Text>
+      </View>
+
+      {/* CTA */}
       <TouchableOpacity onPress={onDetails} style={styles.cta}>
         <Text style={styles.ctaTxt}>VIEW DETAILS</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  card:{ backgroundColor: colors.white, borderColor:colors.border, borderWidth:1, borderRadius: radius.lg, padding: spacing(1.5), marginBottom: spacing(1.25), shadowColor:'#000', shadowOpacity:.05, shadowRadius:6, elevation:2 },
-  rowSpace:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:6 },
-  small:{ color:colors.gray700 },
-  id:{ fontSize:16, fontWeight:'700', marginBottom:6 },
-  bold:{ fontWeight:'700' },
-  sep:{ height:1, backgroundColor: colors.border, marginVertical:8 },
-  badge:{ paddingVertical:4, paddingHorizontal:10, borderRadius: radius.pill },
-  badgeTxt:{ color: colors.white, fontWeight:'700' },
-  cta:{ backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical:10, alignItems:'center', marginTop:10 },
-  ctaTxt:{ color: colors.white, fontWeight:'700' },
+  card: {
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing(1.5),
+    marginBottom: spacing(1.25),
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  rowSpace: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#E6F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  small: {
+    fontSize: 13,
+    color: '#6B7280', // gray-500
+    fontWeight: '400',
+  },
+  id: {
+    fontSize: 15,
+    color: '#1F2937', // gray-800 (light black)
+    fontWeight: '400',
+  },
+  text: {
+    fontSize: 14,
+    color: '#1F2937', // light black
+    fontWeight: '400',
+  },
+  sep: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 8,
+  },
+  badge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+  },
+  badgeTxt: {
+    fontSize: 13,
+    fontWeight: '400', // regular
+  },
+  cta: {
+    backgroundColor: '#4DA3FF',
+    borderRadius: radius.pill,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  ctaTxt: {
+    color: colors.white,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
 });
-function statusBg(s){ 
-  const m = { 'Pending':'#E6A33A', 'In-Transit':'#34C759', 'To Receive':'#5A67D8', 'Received':'#16A34A', 'Canceled':'#EF4444' };
-  return { backgroundColor: m[s] || colors.primary };
+
+/** Return light badge background + readable foreground color */
+function statusStyle(s) {
+  const map = {
+    'Pending':      { bg: '#FDEDD3', fg: '#8A5A11' },
+    'In-Transit':   { bg: '#C7F0D8', fg: '#166534' },
+    'To Receive':   { bg: '#E4E0F9', fg: '#4C1D95' },
+    'Received':     { bg: '#E0F6E8', fg: '#166534' },
+    'Canceled':     { bg: '#F8D7DA', fg: '#991B1B' },
+  };
+  return map[s] || { bg: '#E6E6E6', fg: '#111827' };
 }
