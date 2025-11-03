@@ -10,12 +10,24 @@ import PlaceShipment from './PlaceShipment';
 import LiveTrack from './LiveTrack';
 import CheckDriver from './CheckDriver';
 import Profile from './Profile';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 const Tab = createBottomTabNavigator();
 
+
+
 function Dashboard({ navigation }) {
-  const { shipments } = useApp();
+  const { shipments, fetchShipments } = useApp();
   const [filter, setFilter] = useState('All');
+
+  // refresh list whenever this tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchShipments?.();
+    }, [fetchShipments])
+  );
 
   const chips = ['All','Pending','In-Transit','To Receive','Received','Canceled'];
   const items = useMemo(() => filter==='All' ? shipments : shipments.filter(s => s.status===filter), [shipments, filter]);

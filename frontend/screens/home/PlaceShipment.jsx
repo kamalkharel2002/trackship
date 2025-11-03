@@ -207,7 +207,7 @@ export default function PlaceShipment() {
       parcel_description: it.desc || '',
     }));
 
-    const delivery_type = form.roadside ? 'roadside' : 'hub_to_hub';
+    const delivery_type = form.roadside ? 'roadside_pickup' : 'hub_to_hub';
 
     return {
       receiver_name: form.receiverName,
