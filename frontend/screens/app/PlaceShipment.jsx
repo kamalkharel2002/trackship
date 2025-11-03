@@ -20,6 +20,16 @@ export default function PlaceShipment() {
   const onAddItem = () => setItems(prev => [...prev, { category: '', description: '' }]);
   const onChangeItem = (idx, next) => { const copy = [...items]; copy[idx] = next; setItems(copy); };
   const onRemoveItem = (idx) => setItems(prev => prev.filter((_, i) => i !== idx));
+  const checkStoredHubs = async () => {
+    const raw = await AsyncStorage.getItem('@hubs_data');
+    if (raw) {
+      const hubs = JSON.parse(raw);
+      console.log('📦 Hubs from AsyncStorage:', hubs);
+    } else {
+      console.log('⚠️ No hubs found in AsyncStorage');
+    }
+  };
+  
 
   const submit = async () => {
     if (!receiverName || !receiverPhone || !sourceHub || !destHub || items.some(i => !i.category || !i.description)) {

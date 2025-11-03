@@ -5,7 +5,7 @@ import PrimaryButton from '../../components/PrimaryButton';
 import { colors, spacing } from '../../theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from '../../config'
-
+import { fetchAndStoreHubs } from '../../utils/hubs';
 
 const KEY_ACCESS = '@access_token';
 const KEY_REFRESH = '@refresh_token';
@@ -52,6 +52,7 @@ const onLogin = async () => {
       ['@user', JSON.stringify(data.user)],
     ]);
 
+    await fetchAndStoreHubs();
     navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
   } catch (err) {
     console.log('Network error:', err?.message || String(err));
