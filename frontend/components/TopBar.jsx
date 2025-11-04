@@ -1,15 +1,46 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 
+const HIDE_BELL_ROUTES = new Set([
+  'Splash',           // splash screen
+  'RoleChoice',
+  'TermsCustomer',
+  'TermsDriver',
+  'SignupCustomer',
+  'Verify',
+  'Login',
+  'ForgotPassword',
+]);
+
+// Screens that should NOT show the TopBar at all (completely hidden)
+const HIDE_TOPBAR_ROUTES = new Set([
+  'Splash',          
+  'RoleChoice',
+  // 'TermsCustomer',
+  // 'TermsDriver',
+  // 'SignupCustomer',
+  // 'Verify',
+  'Login',
+  // 'ForgotPassword',
+]);
+
+
 export default function TopBar() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const routeName = route?.name ?? '';
+  const showBell = !HIDE_BELL_ROUTES.has(routeName);
+  // If route is in hidden list, return nothing
+  if (HIDE_TOPBAR_ROUTES.has(routeName)) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
-      {/* Status bar space for iOS */}
+      {/* Status bar spacer */}
       <View style={{ height: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight }} />
 
       {/* Content Row */}
@@ -20,12 +51,16 @@ export default function TopBar() {
           resizeMode="contain"
         />
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Notifications')}
-          style={styles.bell}
-        >
-          <Ionicons name="notifications-outline" size={26} color={colors.primary} />
-        </TouchableOpacity>
+        {showBell && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Notifications')}
+            style={styles.bell}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+          >
+            <Ionicons name="notifications-outline" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -39,11 +74,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    borderBottomLeftRadius: 10,   // gives a soft bottom curve
+    borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
   },
   inner: {
-    height: 30,                   // slightly taller than before
+    height: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

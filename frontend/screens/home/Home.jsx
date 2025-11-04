@@ -14,7 +14,7 @@ import LiveTrack from './LiveTrack';
 import CheckDriver from './CheckDriver';
 import Profile from './Profile';
 import { useFocusEffect } from '@react-navigation/native';
-import { useApp } from '../../context/AppContext'; // if you have it; safe even if user comes from storage
+import { useApp } from '../../context/AppContext';
 
 const KEY_USER = '@user';
 const Tab = createBottomTabNavigator();
@@ -24,7 +24,27 @@ function Dashboard({ navigation }) {
   const [filter, setFilter] = useState('All');
   const [firstName, setFirstName] = useState('there');
 
-  // Load user's name from storage
+  const REQUIRED_STATUSES = ['Pending', 'In-Transit', 'To Receive', 'Received', 'Canceled'];
+
+  // demo presets used when a status is missing from live data
+  const defaultByStatus = {
+    'Pending':    { id: 'SHP-1001', status: 'Pending',    from: 'Thimphu',          to: 'Paro',        receiver: 'Karma',   phone: '17900000', fee: 50 },
+    'In-Transit': { id: 'SHP-1002', status: 'In-Transit', from: 'Phuentsholing',    to: 'Thimphu',     receiver: 'Sonam',   phone: '17111111', fee: 65 },
+    'To Receive': { id: 'SHP-1003', status: 'To Receive', from: 'Samdrup Jongkhar', to: 'Wangdue',     receiver: 'Tashi',   phone: '17888888', fee: 80 },
+    'Received':   { id: 'SHP-1004', status: 'Received',   from: 'Gelephu',          to: 'Thimphu',     receiver: 'Tshering',phone: '17777777', fee: 45 },
+    'Canceled':   { id: 'SHP-1005', status: 'Canceled',   from: 'Trashigang',       to: 'Bumthang',    receiver: 'Pema',    phone: '17666666', fee: 55 },
+  };
+
+  // add one placeholder card for any status your API didn't return
+  const topUpWithDefaults = (live) => {
+    const byStatus = new Set(live.map(s => String(s.status || '').trim()));
+    const extras = REQUIRED_STATUSES
+      .filter(st => !byStatus.has(st))
+      .map(st => ({ ...defaultByStatus[st], _placeholder: true })); // mark as demo/placeholder
+    return [...live, ...extras];
+  };
+
+  // Load user's name from storage (unchanged)
   useEffect(() => {
     (async () => {
       try {
@@ -40,7 +60,7 @@ function Dashboard({ navigation }) {
     })();
   }, []);
 
-  // Refresh shipments when screen focuses
+  // Refresh shipments when screen focuses (unchanged)
   useFocusEffect(
     useCallback(() => {
       if (typeof fetchShipments === 'function') fetchShipments();
@@ -48,42 +68,39 @@ function Dashboard({ navigation }) {
   );
 
   const chips = ['All', 'Pending', 'In-Transit', 'To Receive', 'Received', 'Canceled'];
-  const items = useMemo(
-    () => (filter === 'All' ? shipments : shipments.filter(s => s.status === filter)),
-    [shipments, filter]
-  );
+
+  // use live shipments; if some statuses are missing, top-up with defaults
+  const items = useMemo(() => {
+    const hydrated = topUpWithDefaults(shipments || []);
+    return filter === 'All' ? hydrated : hydrated.filter(s => s.status === filter);
+  }, [shipments, filter]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.white }}>
-      {/* Greeting header ABOVE the banner */}
+      {/* header + banner unchanged */}
       <View style={styles.header}>
         <Text style={styles.hello}>Hi, {firstName}</Text>
         <Text style={styles.sub}>Quickly send, track, or check your delivery status.</Text>
       </View>
 
-      {/* Banner image */}
-      <Image
-        source={require('../../../assets/banner-placeholder.png')}
-        style={styles.banner}
-      />
+      <Image source={require('../../../assets/banner-placeholder.png')} style={styles.banner} />
 
-      {/* Content pushed a little further down, like the mock */}
       <View style={styles.content}>
         <Text style={styles.h1}>Dashboard</Text>
 
-        {/* Filter chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
           {chips.map(c => (
             <Chip key={c} label={c} active={filter === c} onPress={() => setFilter(c)} />
           ))}
         </ScrollView>
 
-        {/* Shipment cards */}
+        {/* render live + topped-up defaults */}
         {items.map(item => (
           <ShipmentCard
             key={item.id}
             data={item}
-            onDetails={() => navigation.navigate('ShipmentDetails', { id: item.id })}
+            // disable navigation for placeholders
+            onDetails={item._placeholder ? undefined : () => navigation.navigate('ShipmentDetails', { id: item.id })}
           />
         ))}
       </View>

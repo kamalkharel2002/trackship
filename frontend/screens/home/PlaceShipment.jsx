@@ -8,17 +8,28 @@ import { colors, radius, spacing } from '../../theme';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import ModalDialog from '../../components/ModalDialog';
-import Config from '../../config'
-
+import Config from '../../config';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_BASE_URL = Config.BASE_URL;
-const categoryOptions = ['Electronics', 'Documents', 'Clothes', 'Books', 'Gift'];
 const sizeOptions = ['small', 'medium', 'large'];
+
+const ui = {
+  bgSoft: '#F8FAFD',
+  card: '#FFFFFF',
+  ink: colors?.text || '#1C2530',
+  sub: colors?.gray700 || '#5B6B7A',
+  line: '#E6EEF8',
+  lineSoft: '#DDEBFF',
+  accent: '#3B82F6',
+  danger: colors?.danger || '#E11D48',
+};
 
 function HubSelect({ label, placeholder = 'Select hub', value, onSelect }) {
   const [visible, setVisible] = useState(false);
   const [hubs, setHubs] = useState([]);
   const [q, setQ] = useState('');
+  const [active, setActive] = useState(false); // local highlight only
 
   useEffect(() => {
     (async () => {
@@ -42,27 +53,35 @@ function HubSelect({ label, placeholder = 'Select hub', value, onSelect }) {
   }, [hubs, q]);
 
   return (
-    <View style={{ marginTop: 6 }}>
-      <Text style={{ fontWeight: '800', marginBottom: 6 }}>{label}</Text>
+    <View style={{ marginTop: 10 }}>
+      <Text style={styles.label}>{label}</Text>
 
       <TouchableOpacity
-        onPress={() => setVisible(true)}
-        style={styles.selectField}
-        activeOpacity={0.8}
+        onPress={() => { setVisible(true); setActive(true); }}
+        activeOpacity={0.85}
+        style={[
+          styles.selectField,
+          active && styles.selectFieldActive,
+        ]}
       >
-        <Text style={{ color: value ? colors.text : colors.gray600 }}>
+        <Text style={{ color: value ? ui.ink : colors.gray600 }}>
           {value ? value.hub_name : placeholder}
         </Text>
         <Text style={{ fontWeight: '700' }}>▾</Text>
       </TouchableOpacity>
 
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => { setVisible(false); setActive(false); }}
+      >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '800' }}>{label}</Text>
-              <TouchableOpacity onPress={() => setVisible(false)}>
-                <Text style={{ fontWeight: '700' }}>Close</Text>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>{label}</Text>
+              <TouchableOpacity onPress={() => { setVisible(false); setActive(false); }}>
+                <Text style={styles.modalClose}>Close</Text>
               </TouchableOpacity>
             </View>
 
@@ -85,10 +104,12 @@ function HubSelect({ label, placeholder = 'Select hub', value, onSelect }) {
                     onSelect?.(item);
                     setVisible(false);
                     setQ('');
+                    setActive(false);
                   }}
                   style={styles.optionRow}
+                  activeOpacity={0.85}
                 >
-                  <Text style={{ fontWeight: '600' }}>{item.hub_name}</Text>
+                  <Text style={{ fontWeight: '600', marginBottom: 2 }}>{item.hub_name}</Text>
                   <Text style={{ color: colors.gray600, fontSize: 12 }} numberOfLines={1}>
                     {item.address}
                   </Text>
@@ -110,7 +131,7 @@ function HubSelect({ label, placeholder = 'Select hub', value, onSelect }) {
 function ItemForm({ idx, value, onChange, onRemove }) {
   return (
     <View style={styles.itemCard}>
-      <Text style={{ fontWeight: '800', marginBottom: 6 }}>Item {idx + 1}</Text>
+      <Text style={styles.cardTitle}>Item {idx + 1}</Text>
 
       <TextField
         label="Parcel Category"
@@ -126,6 +147,23 @@ function ItemForm({ idx, value, onChange, onRemove }) {
         onChangeText={(v) => onChange({ ...value, size: v })}
       />
 
+      {/* Quick picks (optional) */}
+      <View style={styles.quickRow}>
+        {sizeOptions.map((s) => {
+          const active = (value.size || '').toLowerCase() === s;
+          return (
+            <TouchableOpacity
+              key={s}
+              onPress={() => onChange({ ...value, size: s })}
+              style={[styles.chip, active && styles.chipActive]}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{s}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       <TextField
         label="Parcel Description"
         placeholder="Enter parcel description"
@@ -133,16 +171,13 @@ function ItemForm({ idx, value, onChange, onRemove }) {
         onChangeText={(v) => onChange({ ...value, desc: v })}
       />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-        <Text>Is fragile</Text>
-        <Switch value={!!value.fragile} onValueChange={(fragile) => onChange({ ...value, fragile })} />
+      <View style={styles.rowJustify}>
+        <Text style={styles.body}>Is fragile</Text>
+        <Switch
+          value={!!value.fragile}
+          onValueChange={(fragile) => onChange({ ...value, fragile })}
+        />
       </View>
-
-      {onRemove && (
-        <TouchableOpacity onPress={onRemove} style={styles.removeBtn}>
-          <Text style={{ color: colors.danger, fontWeight: '700' }}>Remove</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
@@ -162,17 +197,15 @@ export default function PlaceShipment({ navigation }) {
   const [showDate, setShowDate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState([
-    { category: 'Electronics', size: 'medium', desc: 'Laptop computer', fragile: true },
+    { category: '', size: 'small', desc: '', fragile: false },
   ]);
   const [done, setDone] = useState({ visible: false, id: null });
 
-  const addItem = () => setItems([...items, { category: '', size: 'small', desc: '', fragile: false }]);
-  const removeItem = (i) => setItems(items.filter((_, idx) => idx !== i));
-  const updateItem = (i, val) => {
-    const next = [...items];
-    next[i] = val;
-    setItems(next);
-  };
+  const addItem = () =>
+    setItems((cur) => [...cur, { category: '', size: 'small', desc: '', fragile: false }]);
+  const removeItem = (i) => setItems((cur) => cur.filter((_, idx) => idx !== i));
+  const updateItem = (i, val) =>
+    setItems((cur) => cur.map((it, idx) => (idx === i ? val : it)));
 
   const reset = () => {
     setForm({
@@ -257,43 +290,111 @@ export default function PlaceShipment({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing(2), paddingBottom: spacing(4) }}>
-      <Text style={{ fontWeight: '800', fontSize: 22, marginBottom: spacing(1) }}>Book a Shipment</Text>
+    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <Text style={styles.screenTitle}>Book a Shipment</Text>
 
-      <TextField label="Receiver Name" placeholder="Name" value={form.receiverName} onChangeText={(v) => setForm({ ...form, receiverName: v })} />
-      <TextField label="Receiver Contact NO." placeholder="+975" keyboardType="phone-pad" value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} />
-      <TextField label="Receiver Address" placeholder="123 Main St, City" value={form.receiverAddress} onChangeText={(v) => setForm({ ...form, receiverAddress: v })} />
+      {/* Top fields — highlight handled INSIDE TextField (no wrapper) */}
+      <TextField
+        label="Receiver Name"
+        placeholder="Name"
+        value={form.receiverName}
+        onChangeText={(v) => setForm({ ...form, receiverName: v })}
+      />
+      <TextField
+        label="Receiver Contact NO."
+        placeholder="+975"
+        keyboardType="phone-pad"
+        value={form.phone}
+        onChangeText={(v) => setForm({ ...form, phone: v })}
+      />
+      <TextField
+        label="Receiver Address"
+        placeholder="e.g., Olokha, Thimphu"
+        value={form.receiverAddress}
+        onChangeText={(v) => setForm({ ...form, receiverAddress: v })}
+      />
 
+      {/* Items */}
       <View style={styles.group}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontWeight: '800' }}>Parcel Items</Text>
-          <Text style={{ color: colors.gray700 }}>{items.length} item</Text>
+        <View style={styles.rowJustify}>
+          <Text style={styles.sectionTitle}>Parcel Items</Text>
+          <Text style={styles.muted}>
+            {items.length} item{items.length > 1 ? 's' : ''}
+          </Text>
         </View>
 
         {items.map((it, idx) => (
-          <ItemForm key={idx} idx={idx} value={it} onChange={(val) => updateItem(idx, val)} onRemove={idx > 0 ? () => removeItem(idx) : undefined} />
+          <View key={idx} style={styles.itemContainer}>
+            <View style={styles.itemHeader}>
+              <View style={styles.itemHeaderLeft}>
+                <Ionicons name="cube-outline" size={20} color="#60A5FA" />
+                <Text style={styles.itemTitle}>Item {idx + 1}</Text>
+              </View>
+
+              {idx > 0 && (
+                <TouchableOpacity
+                  onPress={() => removeItem(idx)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close-circle" size={22} color={ui.danger} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Item form */}
+            <ItemForm
+              idx={idx}
+              value={it}
+              onChange={(val) => updateItem(idx, val)}
+            // no onRemove here; handled by the red X above
+            />
+          </View>
         ))}
 
-        <TouchableOpacity onPress={addItem} style={styles.addBtn}>
-          <Text style={{ fontWeight: '800' }}>＋ Add another parcel item</Text>
+        {/* Dotted add button */}
+        <TouchableOpacity onPress={addItem} activeOpacity={0.9} style={styles.addBtnDotted}>
+          <Text style={styles.addBtnText}>＋ Add another parcel item</Text>
         </TouchableOpacity>
       </View>
 
-      <HubSelect label="Select Source Hub" placeholder="Select your nearest hub" value={form.hubSource} onSelect={(hub) => setForm({ ...form, hubSource: hub })} />
-      <HubSelect label="Select Destination Hub" placeholder="Select your parcel destination hub" value={form.hubDest} onSelect={(hub) => setForm({ ...form, hubDest: hub })} />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-        <Text>Roadside delivery</Text>
-        <Switch value={form.roadside} onValueChange={(roadside) => setForm({ ...form, roadside })} />
+
+      {/* Hubs */}
+      <HubSelect
+        label="Select Source Hub"
+        placeholder="Select your nearest hub"
+        value={form.hubSource}
+        onSelect={(hub) => setForm({ ...form, hubSource: hub })}
+      />
+      <HubSelect
+        label="Select Destination Hub"
+        placeholder="Select your parcel destination hub"
+        value={form.hubDest}
+        onSelect={(hub) => setForm({ ...form, hubDest: hub })}
+      />
+
+      {/* Roadside */}
+      <View style={[styles.rowJustify, { marginTop: 10 }]}>
+        <Text style={styles.body}>Roadside delivery</Text>
+        <Switch
+          value={form.roadside}
+          onValueChange={(roadside) => setForm({ ...form, roadside })}
+        />
       </View>
 
       {form.roadside && (
-        <TextField label="Roadside description" placeholder="Write roadside delivery location" value={form.roadsideNote} onChangeText={(v) => setForm({ ...form, roadsideNote: v })} />
+        <TextField
+          label="Roadside description"
+          placeholder="Write roadside delivery location"
+          value={form.roadsideNote}
+          onChangeText={(v) => setForm({ ...form, roadsideNote: v })}
+        />
       )}
 
-      <TouchableOpacity onPress={() => setShowDate(true)} style={styles.dateBtn}>
-        <Text>Preferred Delivery Date</Text>
-        <Text style={{ fontWeight: '700' }}>{form.date.toDateString()}</Text>
+      {/* Date */}
+      <TouchableOpacity onPress={() => setShowDate(true)} style={styles.dateBtn} activeOpacity={0.9}>
+        <Text style={styles.body}>Preferred Delivery Date</Text>
+        <Text style={styles.dateValue}>{form.date.toDateString()}</Text>
       </TouchableOpacity>
 
       {showDate && (
@@ -307,9 +408,24 @@ export default function PlaceShipment({ navigation }) {
         />
       )}
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing(1), alignItems: 'center' }}>
-        <PrimaryButton title="Reset" onPress={reset} style={{ flex: 1, marginRight: 8, backgroundColor: colors.gray300 }} />
-        <PrimaryButton title={submitting ? '' : 'Submit'} onPress={submit} style={{ flex: 1, marginLeft: 8, opacity: submitting ? 0.7 : 1 }} disabled={submitting}>
+      {/* Actions */}
+      <View style={styles.actionsRow}>
+        <PrimaryButton
+          title="Reset"
+          onPress={reset}
+          variant="outline"
+          color="#93C5FD"
+          textStyle={{ color: '#4B5563' }}
+          style={[styles.button, { marginRight: 8 }]}
+        />
+
+
+        <PrimaryButton
+          title={submitting ? '' : 'Submit'}
+          onPress={submit}
+          style={[styles.button, submitting && { opacity: 0.7 }]}
+          disabled={submitting}
+        >
           {submitting && <ActivityIndicator />}
         </PrimaryButton>
       </View>
@@ -320,88 +436,175 @@ export default function PlaceShipment({ navigation }) {
         message="Your shipment has been created successfully."
         onConfirm={() => {
           setDone({ visible: false, id: null });
-          navigation.replace('Home'); // or navigate('Home')
+          navigation.replace('Home');
         }}
       />
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    padding: spacing(2),
+    paddingBottom: spacing(4),
+    backgroundColor: ui.bgSoft,
+  },
+  screenTitle: {
+    fontWeight: '800',
+    fontSize: 22,
+    marginBottom: spacing(1),
+    color: ui.ink,
+  },
+  label: { fontWeight: '800', marginBottom: 6, color: ui.ink },
+  sectionTitle: { fontWeight: '800', color: ui.ink },
+  body: { color: ui.ink },
+  muted: { color: ui.sub },
+
   group: {
-    backgroundColor: '#F7FBFF',
+    backgroundColor: ui.card,
     borderWidth: 1,
-    borderColor: '#DDEBFF',
+    borderColor: ui.lineSoft,
     borderRadius: radius.lg,
     padding: spacing(1.25),
     marginTop: spacing(1),
+    gap: 8,
   },
-  addBtn: {
-    borderWidth: 1,
-    borderColor: '#DDEBFF',
+
+  // dotted add button
+  addBtnDotted: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: ui.ink,
     borderRadius: radius.pill,
-    padding: 12,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 8,
-    backgroundColor: colors.white,
+    marginTop: 2,
+    backgroundColor: ui.card,
   },
+  addBtnText: { fontWeight: '800', color: '#335CFF' },
+
   itemCard: {
-    backgroundColor: colors.white,
+    backgroundColor: ui.card,
     borderWidth: 1,
-    borderColor: '#E6EEF8',
+    borderColor: ui.line,
     borderRadius: radius.lg,
     padding: spacing(1),
     marginTop: 8,
   },
-  removeBtn: { alignSelf: 'flex-end', marginTop: 6 },
+  cardTitle: { fontWeight: '800', marginBottom: 6, color: ui.ink },
+
+  quickRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: '#DDE7FB',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+  },
+  chipActive: {
+    borderColor: '#8FB6FF',
+    backgroundColor: '#F0F6FF',
+  },
+  chipText: { color: ui.ink, fontWeight: '600', textTransform: 'capitalize' },
+  chipTextActive: { color: '#2349E6' },
+
+  rowJustify: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+
   dateBtn: {
-    height: 48,
+    height: 52,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#E6EEF8',
+    borderColor: ui.line,
     paddingHorizontal: spacing(1.5),
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    marginTop: 6,
+    marginTop: 10,
+    backgroundColor: ui.card,
   },
+  dateValue: { fontWeight: '700', color: ui.ink },
+
   selectField: {
     height: 48,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#E6EEF8',
+    borderColor: ui.line,
     paddingHorizontal: spacing(1.5),
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: ui.card,
   },
+  selectFieldActive: {
+    borderColor: '#8FB6FF',
+    backgroundColor: '#F7FAFF',
+    elevation: 1,
+    shadowColor: '#0050FF',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(18, 27, 33, 0.35)',
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: colors.white,
+    backgroundColor: ui.card,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     padding: spacing(1.25),
     maxHeight: '75%',
   },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: ui.ink },
+  modalClose: { fontWeight: '700', color: ui.ink },
+
   search: {
     height: 44,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#E6EEF8',
+    borderColor: ui.line,
     paddingHorizontal: spacing(1),
     marginTop: 10,
+    backgroundColor: ui.card,
   },
   optionRow: {
     padding: spacing(1),
     borderWidth: 1,
-    borderColor: '#E6EEF8',
+    borderColor: ui.line,
     borderRadius: radius.md,
-    backgroundColor: colors.white,
+    backgroundColor: ui.card,
+  },
+
+  actionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing(1), alignItems: 'center' },
+  button: { flex: 1 },
+  btnGhost: { marginRight: 8, backgroundColor: '#EEF2F7' },
+  itemContainer: {
+    marginTop: 8,
+  },
+  itemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  itemHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemTitle: {
+    fontWeight: '800',
+    color: '#60A5FA',
+    marginLeft: 6,
+    fontSize: 16,
   },
 });

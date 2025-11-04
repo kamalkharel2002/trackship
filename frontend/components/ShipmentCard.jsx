@@ -3,13 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 
-export default function ShipmentCard({ data, onDetails }) {
-  const id = data.id || data.shipment_number;
-  const { bg, fg } = statusStyle(data.status);
+// components/ShipmentCard.jsx
+export default function ShipmentCard({ data = {}, onDetails }) {
+  const id = data.id || data.shipment_number || '—';
+  const status = data.status || 'Pending';
+  const { bg, fg } = statusStyle(status);
 
   return (
     <View style={styles.card}>
-      {/* Header: icon + shipment number (2 lines) + status badge */}
+      {/* header */}
       <View style={styles.rowSpace}>
         <View style={styles.rowLeft}>
           <View style={styles.iconWrap}>
@@ -17,53 +19,56 @@ export default function ShipmentCard({ data, onDetails }) {
           </View>
           <View>
             <Text style={styles.small}>Shipment Number</Text>
-            {/* <Text style={styles.id}>{id}</Text> */}
+            <Text style={styles.id}>{id?.slice(0, 5)}</Text>
           </View>
         </View>
 
         <View style={[styles.badge, { backgroundColor: bg }]}>
-          <Text style={[styles.badgeTxt, { color: fg }]}>{data.status}</Text>
+          <Text style={[styles.badgeTxt, { color: fg }]}>{status}</Text>
         </View>
       </View>
 
       <View style={styles.sep} />
 
-      {/* Route */}
+      {/* route */}
       <View style={[styles.rowSpace, { marginBottom: 6 }]}>
-        <Text style={styles.text}>{data.from}</Text>
+        <Text style={styles.text}>{data.from || '—'}</Text>
         <Ionicons name="chevron-forward" size={18} color="#444" />
         <Text style={[styles.text, { maxWidth: '45%' }]} numberOfLines={1}>
-          {data.to}
+          {data.to || '—'}
         </Text>
       </View>
 
-      {/* Receiver info */}
+      {/* receiver */}
       <View style={styles.rowSpace}>
         <View>
           <Text style={styles.small}>Receiver’s Name</Text>
-          <Text style={styles.text}>{data.receiver}</Text>
+          <Text style={styles.text}>{data.receiver || '—'}</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={styles.small}>Receiver’s Contact No.</Text>
-          <Text style={styles.text}>{data.phone}</Text>
+          <Text style={styles.text}>{data.phone || '—'}</Text>
         </View>
       </View>
 
       <View style={styles.sep} />
 
-      {/* Delivery fee */}
+      {/* fee */}
       <View style={styles.rowSpace}>
         <Text style={styles.small}>Delivery Fee</Text>
-        <Text style={styles.text}>Nu. {Number(data.fee).toFixed(2)}</Text>
+        <Text style={styles.text}>
+          {Number.isFinite(Number(data.fee)) ? `Nu. ${Number(data.fee).toFixed(2)}` : '—'}
+        </Text>
       </View>
 
-      {/* CTA */}
-      <TouchableOpacity onPress={onDetails} style={styles.cta}>
+      {/* CTA (disabled for placeholders) */}
+      <TouchableOpacity onPress={onDetails} style={[styles.cta, !onDetails && { opacity: 0.5 }]} disabled={!onDetails}>
         <Text style={styles.ctaTxt}>VIEW DETAILS</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   card: {

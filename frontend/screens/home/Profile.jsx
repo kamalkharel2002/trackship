@@ -39,7 +39,7 @@ export default function Profile({ navigation }) {
 
       <View style={{ alignItems: 'center', marginVertical: 12 }}>
         <Image
-          source={require('../../../assets/logo-placeholder.png')}
+          source={require('../../../assets/profile.png')}
           style={{ width: 90, height: 90, borderRadius: 45, opacity: 0.15 }}
         />
         <Text style={{ fontWeight: '800', marginTop: 8 }}>

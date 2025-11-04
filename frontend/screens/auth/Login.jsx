@@ -16,56 +16,57 @@ export default function Login({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-const onLogin = async () => {
-  if (!email || !password) {
-    Alert.alert('Missing Info', 'Please enter both email and password.');
-    return;
-  }
-
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 15000); // optional timeout
-
-  try {
-    const res = await fetch(`${Config.BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      signal: controller.signal,
-    });
-    clearTimeout(id);
-
-    // try to parse JSON, but don't crash if body is empty/non-json
-    let json = null;
-    try { json = await res.json(); } catch { /* leave json = null */ }
-
-    if (!res.ok || !json || json.success !== true) {
-      const msg = json?.message || 'Invalid email or password';
-      console.log('Login failed:', msg);   // log, not error -> avoids red screen
-      Alert.alert('Invalid Login', msg);
+  const onLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Missing Info', 'Please enter both email and password.');
       return;
     }
 
-    const { data } = json;
-    await AsyncStorage.multiSet([
-      ['@access_token', data.access_token],
-      ['@refresh_token', data.refresh_token],
-      ['@user', JSON.stringify(data.user)],
-    ]);
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 15000); // optional timeout
 
-    await fetchAndStoreHubs();
-    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-  } catch (err) {
-    console.log('Network error:', err?.message || String(err));
-    Alert.alert('Network Error', 'Please check your connection and try again.');
-  }
-};
+    try {
+      const res = await fetch(`${Config.BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      });
+      clearTimeout(id);
+
+      // try to parse JSON, but don't crash if body is empty/non-json
+      let json = null;
+      try { json = await res.json(); } catch { /* leave json = null */ }
+
+      if (!res.ok || !json || json.success !== true) {
+        const msg = json?.message || 'Invalid email or password';
+        console.log('Login failed:', msg);   // log, not error -> avoids red screen
+        Alert.alert('Invalid Login', msg);
+        return;
+      }
+
+      const { data } = json;
+      await AsyncStorage.multiSet([
+        ['@access_token', data.access_token],
+        ['@refresh_token', data.refresh_token],
+        ['@user', JSON.stringify(data.user)],
+      ]);
+
+      await fetchAndStoreHubs();
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    } catch (err) {
+      console.log('Network error:', err?.message || String(err));
+      Alert.alert('Network Error', 'Please check your connection and try again.');
+    }
+  };
 
 
   return (
     <View style={styles.wrap}>
       <Image
-        source={require('../../../assets/logo-placeholder.png')}
-        style={{ width: 110, height: 110, marginBottom: spacing(1) }}
+        source={require('../../../assets/logo-placeholder.png')} // logo
+        style={styles.logo}
+        resizeMode="contain"
       />
       <Text style={styles.title}>Login</Text>
 
@@ -104,4 +105,8 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.white, padding: spacing(2), alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '800', marginBottom: 12 },
   link: { textAlign: 'right', color: colors.gray700, marginTop: 6 },
+  logo: {
+    width: 200,
+    height: 60,
+  },
 });
